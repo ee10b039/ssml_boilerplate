@@ -37,7 +37,6 @@ if TEST_CUDA:
 floating_set = {torch.FloatTensor, torch.DoubleTensor, torch.cuda.FloatTensor,
                 torch.cuda.DoubleTensor, torch.HalfTensor, torch.cuda.HalfTensor}
 
-
 def is_floating(t):
     if not isinstance(t, type):
         raise TypeError('t should be an instance of type')

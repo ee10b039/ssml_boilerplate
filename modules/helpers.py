@@ -1,4 +1,3 @@
-
 import numpy as np
 import torch
 import pickle
@@ -64,10 +63,10 @@ def test_batchwise(path_model, dataloader, label_type, blueprint_input, criterio
             # print(input_batch.shape)
 
             num_data_points += input_batch.shape[0]
-            
+
             pred_label = model(input_batch)
             # print(f'pred_label.shape = {pred_label.shape}')
-            
+
             loss = criterion(pred_label, label_batch)
             # print(loss.item())
             running_loss += loss.item()
@@ -98,7 +97,7 @@ def train_batchwise(dataloader, arch_name, dataset_name, label_type, blueprint_i
     meenet1_num_trainable_params = sum(p.numel() for p in model_meenet1.parameters() if p.requires_grad)
     print(f'Number of TOTAL parameters in meenet1 = {meenet1_num_total_params}')
     print(f'Number of TRAINABLE parameters in meenet1 = {meenet1_num_trainable_params}')
-    
+
     loss_history = {}
     if is_xCV:
         val_loss_history = {}
@@ -109,7 +108,7 @@ def train_batchwise(dataloader, arch_name, dataset_name, label_type, blueprint_i
         model_meenet1.apply(weights_init)
         loss_history[lr] = []
 
-        optimizer = torch.optim.Adam(params=model_meenet1.parameters(), 
+        optimizer = torch.optim.Adam(params=model_meenet1.parameters(),
                                     lr=lr,
                                     betas=(optim_hyperparams['adam']['beta_1'], optim_hyperparams['adam']['beta_2']),
                                     eps=optim_hyperparams['adam']['epsilon'],
@@ -139,20 +138,20 @@ def train_batchwise(dataloader, arch_name, dataset_name, label_type, blueprint_i
                 num_train += input_batch.shape[0]
 
                 optimizer.zero_grad()
-                
+
                 pred_label = model_meenet1(input_batch)
                 # print(f'pred_label.shape = {pred_label.shape}')
-                
+
                 loss = criterion(pred_label, label_batch)
                 # print(loss.item())
                 running_loss += loss.item()
-                
+
                 loss.backward()
                 optimizer.step()
 
             # if epoch >= 50:
             # scheduler.step()
-                
+
             loss_history[lr].append(running_loss/num_train)
             print(f'lr={lr} : [epoch {epoch}/{max_epochs}] : loss = {loss_history[lr][-1]}')
 
@@ -179,7 +178,7 @@ def train_batchwise(dataloader, arch_name, dataset_name, label_type, blueprint_i
 
             val_loss = test_batchwise(path_model=path_trained_model, dataloader=val_dataloader,
                             label_type=label_type, blueprint_input=blueprint_input, criterion=criterion,
-                            arch_name=arch_name, dataset_name=dataset_name, 
+                            arch_name=arch_name, dataset_name=dataset_name,
                             is_xCV=is_xCV, xCV_id=xCV_id)
 
             val_loss_history[lr] = val_loss
@@ -191,7 +190,7 @@ def train_batchwise(dataloader, arch_name, dataset_name, label_type, blueprint_i
     if is_xCV:
         path_loss_history = f'meta_blob/{arch_name}_{dataset_name}_{label_type}_{scheduler_name}_{max_epochs}epochs_{batch_size}batches_{xCV_id}_dev_fold{xCV_foldIdx}.losshistory'
         path_val_loss_history = f'meta_blob/{arch_name}_{dataset_name}_{label_type}_{scheduler_name}_{max_epochs}epochs_{batch_size}batches_{xCV_id}_val_fold{xCV_foldIdx}.losshistory'
-        
+
         with open(path_loss_history, 'wb') as handle:
             pickle.dump(obj=loss_history, file=handle, protocol=pickle.HIGHEST_PROTOCOL)
         print(f'Training Loss History for xCV_fold-{xCV_foldIdx} is saved @ {path_loss_history}')
@@ -212,7 +211,7 @@ def train_batchwise(dataloader, arch_name, dataset_name, label_type, blueprint_i
 def train_cuda(device, dataset_name, audio_channel, type_input, type_label, data_feats_tensor, blueprint_input, criterion, num_epochs, learning_rates, lr_decay_rate, lr_decay_epoch_size, optim_hyperparams, reg_strengths=0.0, batch_size=1):
     """
     Trains the network.
-    
+
     Inputs:
     - device            [type=torch.device] : The device we want to run the network on
     - dataset_name      [type=str]          : name of the dataset (eg. 'MSD100', 'DSD100' etc)
@@ -243,18 +242,18 @@ def train_cuda(device, dataset_name, audio_channel, type_input, type_label, data
     meenet1_num_trainable_params = sum(p.numel() for p in model_meenet1.parameters() if p.requires_grad)
     print(f'Number of TOTAL parameters in meenet1 = {meenet1_num_total_params}')
     print(f'Number of TRAINABLE parameters in meenet1 = {meenet1_num_trainable_params}')
-    
+
     loss_history = {}
     num_train = data_feats_tensor.shape[1]
 
 
     for m_lr in learning_rates:
-        
+
         # Initializing network weights and bias
         model_meenet1.apply(weights_init)
         loss_history[m_lr] = []
 
-        optimizer = torch.optim.Adam(params=model_meenet1.parameters(), 
+        optimizer = torch.optim.Adam(params=model_meenet1.parameters(),
                                         lr=m_lr,
                                         betas=(optim_hyperparams['adam']['beta_1'], optim_hyperparams['adam']['beta_2']),
                                         eps=optim_hyperparams['adam']['epsilon'],
@@ -262,7 +261,7 @@ def train_cuda(device, dataset_name, audio_channel, type_input, type_label, data
                                         amsgrad=True
                                     )
 
-        # optimizer = torch.optim.SGD(params=model_meenet1.parameters(), 
+        # optimizer = torch.optim.SGD(params=model_meenet1.parameters(),
         #                             lr=m_lr, momentum=0.75, dampening=0,
         #                             nesterov=True
         #                            )
@@ -280,13 +279,13 @@ def train_cuda(device, dataset_name, audio_channel, type_input, type_label, data
             #         else:
             #             print(f'\tNO saturation. Continuing.')
             #             break
-                    
+
             #         if i == lr_decay_epoch_size-1:
             #             print(f'\tloss is saturated for {lr_decay_epoch_size} epochs.\n\tDecaying lr by {lr_decay_rate}')
             #             m_lr *= lr_decay_rate
             #             print(f'\tNew learning_rate = {m_lr}')
             #             loss_history[m_lr] = []
-            
+
             ####### decaying learning rate every few epochs
             # if epoch%25 == 0 and epoch != 0:
             #     print(f'decaying lr by {lr_decay_rate}')
@@ -303,17 +302,17 @@ def train_cuda(device, dataset_name, audio_channel, type_input, type_label, data
                 # train_input_tensor = train_input_tensor.cuda()                              # converting to 'type = torch.cuda.FloatTensor'
                 train_label_tensor = data_feats_tensor[1,i,:,:].cuda().view_as(blueprint_input)    # torch.Size([1, 1, 1025, 15])
                 # train_label_tensor = train_label_tensor.cuda()                              # converting to 'type = torch.cuda.FloatTensor'
-                
+
                 optimizer.zero_grad()
-                
+
                 pred_label_tensor = model_meenet1(train_input_tensor)   # torch.Size([1, 1, 1025, 15])
                 # pred_label_tensor.cuda()
                 # print(f'pred_label_tensor.device = {pred_label_tensor.device}')
-                
+
                 loss = criterion(pred_label_tensor, train_label_tensor)
                 loss.backward()
                 optimizer.step()
-                
+
                 running_loss += loss.item()
 
             loss_history[m_lr].append(running_loss/num_train)
@@ -321,7 +320,7 @@ def train_cuda(device, dataset_name, audio_channel, type_input, type_label, data
 
 
         print('Network Training: FINISHED')
-        print(f'SAVING Trained Model')           
+        print(f'SAVING Trained Model')
         torch.save(model_meenet1.state_dict(), f'trained_models/leakyReLU_expLR_meenet1_{dataset_name}_{type_input}-{type_label}_{audio_channel}_{m_lr}_{num_epochs}epochs_{device}.model')
         print(f'Trained Model SAVED at: trained_models/leakyReLU_expLR_meenet1_{dataset_name}_{type_input}-{type_label}_{audio_channel}_{m_lr}_{num_epochs}epochs_{device}.model')
 
@@ -337,7 +336,7 @@ def train_cuda(device, dataset_name, audio_channel, type_input, type_label, data
 def test_cuda(device, path_model, test_feats_tensor, criterion, blueprint_input):
     """
     Load the model and perform testing for given test inputs
-    
+
     Inputs
     - device                [type=torch.device]     : CPU or CUDA
     - path_model            [type=str]              : The path of the model where model is saved
@@ -347,7 +346,7 @@ def test_cuda(device, path_model, test_feats_tensor, criterion, blueprint_input)
 
     Returns:
     - [type=dict] : loss for every test data and the predicted labels (torch.tensor)
-    
+
     """
     print('LOADING model for testing......')
     model_meenet1 = meenet1.MeeAutoEncoder()
@@ -381,7 +380,7 @@ def test_cuda(device, path_model, test_feats_tensor, criterion, blueprint_input)
 
             loss = criterion(pred_label_tensor, test_label_tensor)
             # print(f'Testvector(i)={i}: loss = {loss.item()}')
-            
+
             loss_history.append(loss.item())
             # pred_label_tensor = pred_label_tensor.to(torch.device("cpu"))         # moving the predicted label tensor to CPU
             # print(f'pred_label_tensor.device = {pred_label_tensor.device}, {type(pred_label_tensor)}')
@@ -422,7 +421,7 @@ def test_cuda(device, path_model, test_feats_tensor, criterion, blueprint_input)
 def train(data_feats, data_keys, blueprint_input, criterion, num_epochs, num_train, learning_rates, optim_hyperparams, reg_strengths=0.0, batch_size=1):
     """
     Trains the network.
-    
+
     Inputs:
     - data_feats        [type=dict]         : The input(+labels) you want the network to train on
     - data_keys         [type=array         : The keys of the data_feats dictionary
@@ -441,44 +440,44 @@ def train(data_feats, data_keys, blueprint_input, criterion, num_epochs, num_tra
 
     print('Network Initialization.......')
     model_meenet1 = meenet1.MeeAutoEncoder()
-    
+
     loss_history = {}
 
     for m_lr in learning_rates:
         loss_history[m_lr] = []
-        optimizer = torch.optim.SGD(model_meenet1.parameters(), lr=m_lr, nesterov=True, momentum=optim_hyperparams['momentum'], 
+        optimizer = torch.optim.SGD(model_meenet1.parameters(), lr=m_lr, nesterov=True, momentum=optim_hyperparams['momentum'],
                                     weight_decay=optim_hyperparams['weight_decay'], dampening=optim_hyperparams['dampening'])
         for epoch in range(num_epochs):
             running_loss = 0.0
             for i in range(num_train):
                 train_input = torch.from_numpy(data_feats[data_keys[0]][:,:,i])
                 train_input = train_input.view_as(blueprint_input)
-                
+
                 train_label = torch.from_numpy(data_feats[data_keys[1]][:,:,i])
                 train_label = train_label.view_as(blueprint_input)
                 optimizer.zero_grad()
-                
+
                 pred_label = model_meenet1(train_input)
-                
+
                 loss = criterion(pred_label, train_label)
                 loss.backward()
                 optimizer.step()
-                
+
                 running_loss += loss
 
             loss_history[m_lr].append(running_loss/num_train)
             print('lr = {} : [epoch {}/{}] : loss = {}'.format(m_lr, epoch, num_epochs, loss_history[m_lr][epoch]))
 
-    print('Network Training: FINISHED', '\n SAVING Trained Model as \'meenet1_state1.model\' ....')           
+    print('Network Training: FINISHED', '\n SAVING Trained Model as \'meenet1_state1.model\' ....')
     torch.save(model_meenet1.state_dict(), 'meenet1_state1.model')
     print('Trained Model SAVED.....')
-    
+
     print(f'Saving the loss_history as pickle file....')
     with open('train_loss_history.pkl', 'wb') as handle:
         pickle.dump(obj=loss_history, file=handle, protocol=pickle.HIGHEST_PROTOCOL)
     print(f'loss_history SAVED as train_loss_history.pkl file')
 
-    
+
     return loss_history
 
 
@@ -487,7 +486,7 @@ def train(data_feats, data_keys, blueprint_input, criterion, num_epochs, num_tra
 def test(path_model, test_feats, test_keys, num_test, criterion, blueprint_input):
     """
     Load the model and perform testing for given test inputs
-    
+
     Inputs
     - path_model    [type=str]  : The path of the model where model is saved
     - test_feats    [type=dict] : A dictionary containing the stft features in stacked format for every data
@@ -498,7 +497,7 @@ def test(path_model, test_feats, test_keys, num_test, criterion, blueprint_input
 
     Returns:
     - [type=array] : loss for every test data
-    
+
     """
     print('LOADING model for testing......')
     model_meenet1 = meenet1.MeeAutoEncoder()
@@ -513,16 +512,16 @@ def test(path_model, test_feats, test_keys, num_test, criterion, blueprint_input
 
             test_label = torch.from_numpy(test_feats[test_keys[1]][:,:,i])
             test_label = test_label.view_as(blueprint_input)
-            
+
             # predicted masks (used for post-processing)
             pred_label = model_meenet1(test_input)          # has same type and shape as 'blueprint_input'
-            
+
             loss = criterion(pred_label, test_label)
             loss_history.append(loss)
-        
+
     print('\nTest set: num_test = {} , Average loss = {:.4f}\n'.format(num_test, np.mean(loss_history)))
     print('TESTING FINISHED. Returning loss_history.')
-    
+
     return loss_history
 
 ######### --------------------------------------------------------------------

@@ -12,7 +12,6 @@ __maintainer__ = "Vinay Kumar"
 __status__ = "Research & Development"
 
 # SANITY-CHECK: if the wav folder exists
-
 #######################################
 
 # initial Input tensor size = (batch, channel = 1, height = 15, width = 1025)
@@ -24,18 +23,18 @@ class Interpolate(torch.nn.Module):
         self.interpolate = torch.nn.functional.interpolate
         self.size = size
         self.mode = mode
-    
+
     def forward(self, x):
         x = self.interpolate(input=x, size=self.size, mode=self.mode, align_corners=False)
         return x
-    
+
 class Save_layer(torch.nn.Module):
     def __init__(self):
         super(Save_layer, self).__init__()
 
-    
+
     def forward(self, x):
-        # print or save the layer 
+        # print or save the layer
         # print(x)
         return x
 
@@ -87,7 +86,7 @@ class MeeEncoder(torch.nn.Module):
             self.en_leakyReLU,
             self.save_layer
         )
-    
+
     def forward(self, x):
         return self.encoder(x)
 
@@ -146,7 +145,7 @@ class MeeAutoEncoder(torch.nn.Module):
         super(MeeAutoEncoder, self).__init__()
         self.encoder = MeeEncoder()
         self.decoder = MeeDecoder()
-    
+
     def forward(self, x):
         return self.decoder(self.encoder(x))
 

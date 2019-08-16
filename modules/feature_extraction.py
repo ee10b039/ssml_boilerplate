@@ -1,4 +1,3 @@
-
 #from numba import vectorize
 #from timeit import default_timer as timer
 
@@ -10,11 +9,11 @@ import torch
 
 __author__ = "Vinay Kumar"
 __copyright__ = "copyright 2018, Project SSML"
-__maintainer__ = "Vinay Kumar and Ramesh Kunasi"
+__maintainer__ = "Vinay Kumar"
 __status__ = "Research & Development"
 
 
-def extract_stft(data_paths, sr=44100, size_timeframe=15, size_freqframe=1025, 
+def extract_stft(data_paths, sr=44100, size_timeframe=15, size_freqframe=1025,
                     size_fft=2048, size_hop=512, size_window=2048, type_window='hann'
                 ):
 
@@ -62,7 +61,7 @@ def extract_stft(data_paths, sr=44100, size_timeframe=15, size_freqframe=1025,
 
 #########--------------------------------------------------------------------
 
-def extract_stft_cuda(device, data_paths, to_mono=False, sr=44100, size_timeframe=15, size_freqframe=1025, 
+def extract_stft_cuda(device, data_paths, to_mono=False, sr=44100, size_timeframe=15, size_freqframe=1025,
                         size_fft=2048, size_hop=512, size_window=2048, type_window='hann'
                     ):
     """
@@ -91,11 +90,11 @@ def extract_stft_cuda(device, data_paths, to_mono=False, sr=44100, size_timefram
 
     for i in data_paths.keys():
         X_list = []
-        
+
         for j in range(data_paths[i].shape[0]):
             feat_stack_tensor_j = None
             wav_file, _ = librosa.load(data_paths[i][j], sr=sr)         # bottleneck
-            
+
             if to_mono:
                 wav_file = librosa.to_mono(y=wav_file)          # converting the stereo channel to mono channel
                 gc.collect()
@@ -108,7 +107,7 @@ def extract_stft_cuda(device, data_paths, to_mono=False, sr=44100, size_timefram
             start_idx=0
 
             print(f'extract_stft_cuda : i={i}, j={j}')
-            
+
             for k in range(int(feat_abs_tensor.shape[1]/size_timeframe)):
                 if k==0:
                     feat_stack_tensor_j = (feat_abs_tensor[:, start_idx:start_idx + size_timeframe]).view_as(blueprint)
@@ -119,17 +118,17 @@ def extract_stft_cuda(device, data_paths, to_mono=False, sr=44100, size_timefram
                     feat_stack_tensor_j = torch.cat((feat_stack_tensor_j, (feat_abs_tensor[:, start_idx:start_idx + size_timeframe]).view_as(blueprint)), dim=1)
                     start_idx += size_timeframe
                     # print('i={}, j={}, k={}'.format(i, j, k))
-            
+
             X_list.append(feat_stack_tensor_j)
-            
+
             del wav_file
             del feat_abs
             del feat_abs_tensor
             del feat_stack_tensor_j
 
-        
+
         feat_stack_tensor = X_list.pop(0).to(torch.device('cpu'))
-        
+
         while len(X_list)>0:
             print(f'len(X_list) = {len(X_list)}')
             feat_stack_tensor = torch.cat((feat_stack_tensor, X_list.pop(0).to('cpu')), dim=1)
@@ -149,7 +148,7 @@ def extract_stft_cuda(device, data_paths, to_mono=False, sr=44100, size_timefram
             del feat_stack_tensor
             gc.collect()
             print('data_feat_cat_tensor.shape = {}'.format(data_feat_cat_tensor.shape))
-        
+
         key_count += 1
         # del feat_stack_tensor
 

@@ -21,7 +21,6 @@ __copyright__ = "copyright 2018, Project SSML"
 __maintainer__ = "Vinay Kumar"
 __status__ = "Research & Development"
 
-
 #########--------------------------------------------------------------------------------------
 ######### Network TRAINING --------------------------------------------------------------------
 #########--------------------------------------------------------------------------------------
@@ -60,7 +59,7 @@ csv_files = {'dev':'../data/MSD100/DATA_MEENET1/dev/meenet1_dev_data.csv',
 root_dirs = {'dev':'../data/MSD100/DATA_MEENET1/dev/',
              'test':'../data/MSD100/DATA_MEENET1/test/'
             }
-            
+
 paths_data_tensor = {}
 
 # Hyperparams for network
@@ -122,10 +121,10 @@ if generate_data:
                         paths_data_tensor[stage][type_input][type_label] = f'meta_blob/{DATASET_NAME}_{stage}_{type_input}-{type_label}_{audio_channel}_stft_tensor.pt'
 
 
-        dp.data_generation(csv_file=csv_files[stage], 
-                            root_dir=root_dirs[stage], 
-                            blueprint=blueprint_input, 
-                            paths_data_tensor=paths_data_tensor[stage], 
+        dp.data_generation(csv_file=csv_files[stage],
+                            root_dir=root_dirs[stage],
+                            blueprint=blueprint_input,
+                            paths_data_tensor=paths_data_tensor[stage],
                             filetype_inputs_list=filetype_inputs_list,
                             filetype_labels_list=filetype_labels_list)
 
@@ -167,13 +166,13 @@ if do_cross_validation and do_training and do_batchwise_processing:     # neede 
                 fold_csv = open(path_csv_fold, 'w')
                 csv_files['xval']['val'].append(path_csv_fold)
                 csv_files['xval']['dev'].append(f'{path_csv_dir}{job_id}_dev_fold{fld_idx}.csv')
-            
+
             fold_csv.write(line)    # writing each line into the fold csv file
-    
+
     for i in range(len(csv_files['xval']['val'])):
         with open(csv_files['xval']['dev'][i],'wb') as wfd:
             for j, f in enumerate(csv_files['xval']['val']):
-                if j != i:   
+                if j != i:
                     with open(f,'rb') as fd:
                         shutil.copyfileobj(fd, wfd, 1024*1024*10)  #10MB per writing chunk to avoid reading big file into memory.
                         # print('success')
@@ -206,7 +205,7 @@ if do_cross_validation and do_training and do_batchwise_processing:     # neede 
                     criterion.cuda()
                     print(f'Using MSELoss(size_average=True)')
                     print(f'stage={stage} | {type_input}/{type_label} | val_fold={val_fold}')
-                    
+
                     print(f'Creating DEV dataset for val_fold={val_fold}')
                     dataset = dl.Meenet1Dataset(csv_file=csv_files['xval'][stage][val_fold],
                                                 root_dir=root_dirs[stage],
@@ -215,15 +214,15 @@ if do_cross_validation and do_training and do_batchwise_processing:     # neede 
                     print(f'Creating the Dataloader')
                     dataloader=torch.utils.data.DataLoader(dataset=dataset, batch_size=batch_size,
                                                             shuffle=True, num_workers=num_workers)
-                    
+
                     helpers.train_batchwise(dataloader=dataloader, arch_name = ARCH_NAME, dataset_name=DATASET_NAME,
                                             label_type=type_label, blueprint_input=blueprint_input,
                                             train_params=train_params, optim_hyperparams=optim_hyperparams,
-                                            criterion=criterion, 
-                                            is_xCV=True, xCV_id=f'{job_id}', xCV_foldIdx=val_fold, 
-                                            xCV_val_csv=csv_files['xval']['val'][val_fold], 
+                                            criterion=criterion,
+                                            is_xCV=True, xCV_id=f'{job_id}', xCV_foldIdx=val_fold,
+                                            xCV_val_csv=csv_files['xval']['val'][val_fold],
                                             xCV_root_dir=root_dirs[stage])
-                    
+
 
 
 
@@ -251,9 +250,9 @@ if do_batchwise_processing and not do_cross_validation:
 
                     print(f'creating the {stage} dataset')
                     dataset = dl.Meenet1Dataset(csv_file=csv_file, root_dir=root_dir, label_type=type_label)
-                    
+
                     print(f'creating the {stage} dataloader')
-                    dataloader = torch.utils.data.DataLoader(dataset=dataset, batch_size=batch_size, 
+                    dataloader = torch.utils.data.DataLoader(dataset=dataset, batch_size=batch_size,
                                                                 shuffle=True, num_workers=num_workers)
                     start = time.time()
                     helpers.train_batchwise(dataloader=dataloader, arch_name = ARCH_NAME, dataset_name=DATASET_NAME,
@@ -262,13 +261,13 @@ if do_batchwise_processing and not do_cross_validation:
                                             criterion=criterion)
                     print(f'delta_time(helpers.train_batchwise[{type_label}]) = {time.time() - start}')
 
-                    
-                        
 
 
 
 
-                    
+
+
+
 
 
 
@@ -283,7 +282,7 @@ if do_batchwise_processing and not do_cross_validation:
 
                 #     start = time.time()
                 #     helpers.test_batchwise(model=)
-    
+
     ##################### OLDER-CODE ###################################################################
 
 else:
@@ -329,20 +328,20 @@ else:
                             dev_stft_tensor = fe.extract_stft_cuda(device=device, data_paths=dev_data_paths, to_mono=True)
                         elif audio_channel == 'stereo':
                             dev_stft_tensor = fe.extract_stft_cuda(device=device, data_paths=dev_data_paths, to_mono=False)
-                        
+
                         # saving the STFT feature tensor as pytorch file
                         torch.save(dev_stft_tensor, f'meta_blob/{DATASET_NAME}_{stage}_{type_input}-{type_label}_{audio_channel}_stft_tensor.pt')
                         print(f'Extracted features saved succesfully at: meta_blob/{DATASET_NAME}_{stage}_{type_input}-{type_label}_{audio_channel}_stft_tensor.pt')
 
                     print('Step-2:')
-                    dev_loss_history_cuda = helpers.train_cuda(device=device, dataset_name=DATASET_NAME, audio_channel=audio_channel, 
+                    dev_loss_history_cuda = helpers.train_cuda(device=device, dataset_name=DATASET_NAME, audio_channel=audio_channel,
                                                                 type_input=type_input, type_label=type_label,
-                                                                data_feats_tensor=dev_stft_tensor, blueprint_input=blueprint_input, 
-                                                                criterion=criterion, num_epochs=num_epochs, learning_rates=learning_rates, 
-                                                                lr_decay_rate = lr_decay_rate, lr_decay_epoch_size=lr_decay_epoch_size, 
-                                                                optim_hyperparams=optim_hyperparams , reg_strengths=reg_strengths, 
+                                                                data_feats_tensor=dev_stft_tensor, blueprint_input=blueprint_input,
+                                                                criterion=criterion, num_epochs=num_epochs, learning_rates=learning_rates,
+                                                                lr_decay_rate = lr_decay_rate, lr_decay_epoch_size=lr_decay_epoch_size,
+                                                                optim_hyperparams=optim_hyperparams , reg_strengths=reg_strengths,
                                                                 batch_size=batch_size)
-                    
+
                     del dev_stft_tensor
                     gc.collect()
 
@@ -373,22 +372,22 @@ else:
                     else:
                         print('features tensor file DOESNOT exists. Initiating the Feature Extraction process.....')
                         print('Step-1:')
-                        
+
                         if audio_channel == 'mono':
                             test_stft_tensor = fe.extract_stft_cuda(device=device, data_paths=test_data_paths, to_mono=True)
                         elif audio_channel == 'stereo':
                             test_stft_tensor = fe.extract_stft_cuda(device=device, data_paths=test_data_paths, to_mono=False)
-                        
+
                         # saving to a pytorch file
                         torch.save(test_stft_tensor, f'meta_blob/{DATASET_NAME}_{stage}_{type_input}-{type_label}_{audio_channel}_stft_tensor.pt')
                         print(f'Extracted features saved succesfully at: meta_blob/{DATASET_NAME}_{stage}_{type_input}-{type_label}_{audio_channel}_stft_tensor.pt')
 
                     print('Step-2: Starting TESTING process')
-                    test_output_cuda = helpers.test_cuda(device=device, 
-                                                        path_model=f'trained_models/meenet1_{DATASET_NAME}_{type_input}-{type_label}_{audio_channel}_{m_lr_test}_{num_epochs}epochs_{device}.model', 
-                                                        test_feats_tensor=test_stft_tensor, criterion=criterion, 
+                    test_output_cuda = helpers.test_cuda(device=device,
+                                                        path_model=f'trained_models/meenet1_{DATASET_NAME}_{type_input}-{type_label}_{audio_channel}_{m_lr_test}_{num_epochs}epochs_{device}.model',
+                                                        test_feats_tensor=test_stft_tensor, criterion=criterion,
                                                         blueprint_input=blueprint_input)
-                    
+
                     del test_stft_tensor
                     gc.collect()
 

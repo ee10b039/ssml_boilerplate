@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import matplotlib.gridspec as gridspec
 
-
 def static_screen(phase='train', data=None, data_type="<class 'dict'>", num_panes=2, fig_size=(10,20), save_plot=False):
 
     # plotting figures
@@ -27,7 +26,7 @@ def static_screen(phase='train', data=None, data_type="<class 'dict'>", num_pane
 
     fig.add_subplot(pane_loss)
     fig.add_subplot(pane_weights)
-    
+
     plt.show()
 
 

@@ -10,7 +10,7 @@ import gc
 
 __author__ = "Vinay Kumar"
 __copyright__ = "copyright 2018, Project SSML"
-__maintainer__ = "Vinay Kumar and Ramesh Kunasi"
+__maintainer__ = "Vinay Kumar"
 __status__ = "Research & Development"
 
 #########--------------------------------------------------------------------
@@ -58,17 +58,17 @@ def concatenate_wav(path_master_wav_repo, path_target_wavfile, sox_script_file):
     replace_keys(path_master_wav_repo, '&', '_')    # replacing special characters
 
     sox_script = open(sox_script_file, 'w')    # ToDo: do sanity-check if the file exists or not
-    
+
 
     for subdir, dirs, files in os.walk(path_master_wav_repo):
         for file in files:
             if file.endswith('.wav'):
                 file_path = os.path.join(subdir, file)
                 sox_script.write(file_path + ' \\' + '\n')
-    
+
     sox_script.close()
     subprocess.call(['sort', sox_script_file, '-o', sox_script_file])
-    
+
     sox_script = open(sox_script_file, 'r')
     temp = sox_script.read()
     sox_script.close()
@@ -77,25 +77,25 @@ def concatenate_wav(path_master_wav_repo, path_target_wavfile, sox_script_file):
     sox_script.write(temp)
     sox_script.write(path_target_wavfile)
     sox_script.close()
-    
+
 
     subprocess.call(['bash', sox_script_file])
-    
+
     return None
-    
+
 #########--------------------------------------------------------------------
 
 def extract_duration(path, out_file):
     """
     Extracting filepath & duration for each wavfile and storing it in a text file.
-    
+
     Inputs:
     - path      [type=str]  : path for 'Development' dirs of the Mixtures
     - out_file          [type=str]  : path of the meta file where the filename & duration will be stored
 
     Returns:
     - None
-    
+
     """
 
     # sanity_check: check if the paths are correct
@@ -107,9 +107,9 @@ def extract_duration(path, out_file):
         for file in files:
             file_path = os.path.join(subdir, file)
             wavfile, sampling_rate = librosa.load(file_path)
-            wavfile_duration = librosa.get_duration(y=wavfile, sr=sampling_rate)   
+            wavfile_duration = librosa.get_duration(y=wavfile, sr=sampling_rate)
             metadata_filepath_duration.write(file_path + ' | ' + str(wavfile_duration) + '\n')
-    
+
     metadata_filepath_duration.close()
 
     # sorting the wavfiles alphabetically to maintain order
@@ -126,18 +126,18 @@ def slice_recording(path_recording, path_metadata_filepath_duration):
     Inputs:
     - path_recording [type=str]: Path to the full joint recording wav file
     - path_metadata_filepath_duration [type=str]: Path to metadat storing filepath address and wav duration
-    
+
     """
 
     metadata_filepath_duration = open(path_metadata_filepath_duration, 'r')
-    
+
     start = 0.0
 
     for line in metadata_filepath_duration:
         filepath, duration = line.split(" | ")
         target_filepath = re.sub('/Mixtures/', '/mic_recordings/Mixtures/', filepath)
         target_parentpath = re.sub('/mixture.wav', '', target_filepath)
-        
+
         # creating folder if the folder doesnot exist
         try:
             os.makedirs(target_parentpath)
@@ -146,10 +146,10 @@ def slice_recording(path_recording, path_metadata_filepath_duration):
                 pass
 
         delta_t = float(duration)
-        
+
         # calling ffmpeg to slice the wav file into its respective sizes
         subprocess.call(["ffmpeg", "-i", path_recording, "-ss", str(start), "-t", str(delta_t), "-acodec", "copy", target_filepath])
-        
+
         # resetting the start for next file in line
         start += delta_t
 
@@ -162,7 +162,7 @@ def preprocess(dataset_name = f'MSD100',
                 path_master_data_repo = '../data/MSD100/',
                 path_inputs = '../data/MSD100/Mixtures/Dev/',
                 path_labels = '../data/MSD100/Sources/Dev/',
-                filetype_inputs = 'mixture', 
+                filetype_inputs = 'mixture',
                 filetype_labels = 'vocals',
                 stage = '',
                 keys = {' ':'_', '\'':'', '(':'', ')':'', '&':'_'}
@@ -195,7 +195,7 @@ def preprocess(dataset_name = f'MSD100',
 
 
     filenames_inputs = open(file_inputs, 'w')
-    filenames_labels = open(file_labels, 'w')    
+    filenames_labels = open(file_labels, 'w')
 
     for subdir, _, files in os.walk(path_inputs):
         for file in files:
@@ -228,7 +228,7 @@ def preprocess(dataset_name = f'MSD100',
 
     inputs_paths = np.array(inputs_paths)
     labels_paths = np.array(labels_paths)
-    
+
     print('Data preprocessing: END.')
 
     return {"inputs_paths" : inputs_paths,
@@ -240,7 +240,7 @@ def postprocess(name_src, name_targets, path_src_prefix, path_src_suffix, path_o
     """
     Takes the frequency domain output data from the meenet model, calculates the mask and then generates the time-series data.
 
-    Calculate: 
+    Calculate:
     - masks
     - timeseries data
     - SIR(signal-to-interfernece ratio)
@@ -248,17 +248,17 @@ def postprocess(name_src, name_targets, path_src_prefix, path_src_suffix, path_o
     - SDR(signal-to-distortion ratio)
 
     Inputs:
-    - name_src              [type=list] : 
-    - name_targets          [type=list] : 
+    - name_src              [type=list] :
+    - name_targets          [type=list] :
     - path_src_prefix       [type=str]  :
-    - path_src_suffix       [type=str]  : 
+    - path_src_suffix       [type=str]  :
     - path_output_dir
     - delimiter             [type=str]  :
     - target_tensor
     - key                   [type=str]  :
 
     Returns:
-    
+
     """
 
     # generating masks
@@ -282,12 +282,12 @@ def postprocess(name_src, name_targets, path_src_prefix, path_src_suffix, path_o
                 total_tensor_sum.add(temp_out)
                 print(f'i={i}')
                 i+=1
-    
+
     # creating masks
     for target in name_targets:
         for source in name_src:
             masks[f'{target}{delimiter}{source}'] = torch.mul(raw_scaled_tensor[f'{target}{delimiter}{source}'], mul_factor)/total_tensor_sum
-    
+
         # saving the masks as pickle file
         with open(f'meta_blob/playground/{target}{delimiter}{source}.mask', 'wb') as handle:
             pickle.dump(obj=masks[f'{target}{delimiter}{source}'], file=handle, protocol=pickle.HIGHEST_PROTOCOL)
@@ -296,7 +296,7 @@ def postprocess(name_src, name_targets, path_src_prefix, path_src_suffix, path_o
     ############################
 
     # generating ISTFT to get timeseries data
-    # need to pass original STFT of the target tensor, NOT the absolute stft 
+    # need to pass original STFT of the target tensor, NOT the absolute stft
 
     # for source in name_src:
     #     blueprint_shape = masks[f'{target}{delimiter}{source}'].shape
@@ -314,19 +314,19 @@ def data_generation(csv_file, root_dir, blueprint, paths_data_tensor, filetype_i
                 # SANITY-CHECK: whether the pre-calculated stft_features Tensors are there?
                 if os.path.exists(paths_data_tensor[type_input][type_label]):
                     # Don't calculate the stft features again. Just load the pytorch tensors to the original device
-                    
+
                     print('features tensor file exists. Loading the extracted features tensor.')
                     # tr_data_feats_tensor = torch.load('tr_data_feats_tensor.pt', map_location='cuda:0')
                     # tr_data_feats_tensor.to(device)
                     stft_tensor = torch.load(paths_data_tensor[type_input][type_label], map_location='cpu')
                     num_files = stft_tensor.shape[1]
                     # tr_data_feats_tensor.to(device)
-                    
+
                     print(f'Features Tensor loaded successfully on {stft_tensor.device}.')
                     print(f'{stft_tensor.shape}')
                     for i in range(stft_tensor.shape[0]):
                         for j in range(stft_tensor.shape[1]):
-                            if i==0:    
+                            if i==0:
                                 path = f'{root_dir}mixtures/{j}.stfttensor'
                                 data = stft_tensor[i,j].clone()
                                 data = data.view_as(blueprint)
