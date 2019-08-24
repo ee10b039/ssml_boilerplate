@@ -34,8 +34,8 @@ print(f'Running on {device}')
 do_training = True
 do_testing = False
 do_batchwise_processing = True
-do_cross_validation = True
-generate_data = False
+do_cross_validation = False
+generate_data = True
 
 tr_loss_history_cuda = None
 
@@ -53,11 +53,11 @@ csv_file = '../data/MSD100/DATA_MEENET1/test/meenet1_test_data.csv'
 root_dir = '../data/MSD100/DATA_MEENET1/test/'
 
 stages = {'dev', 'test'}
-csv_files = {'dev':'../data/MSD100/DATA_MEENET1/dev/meenet1_dev_data.csv',
-             'test':'../data/MSD100/DATA_MEENET1/test/meenet1_test_data.csv'
+csv_files = {'dev':"/media/sushmita/Seagate Backup Plus Drive/DataBase/musdb18hq/train/meenet1_dev_data.csv",
+             'test':"/media/sushmita/Seagate Backup Plus Drive/DataBase/musdb18hq/test/meenet1_test_data.csv",
             }
-root_dirs = {'dev':'../data/MSD100/DATA_MEENET1/dev/',
-             'test':'../data/MSD100/DATA_MEENET1/test/'
+root_dirs = {'dev':"/media/sushmita/Seagate Backup Plus Drive/DataBase/musdb18hq/train",
+             'test':"/media/sushmita/Seagate Backup Plus Drive/DataBase/musdb18hq/test",
             }
 
 paths_data_tensor = {}
@@ -104,6 +104,7 @@ blueprint_input = torch.zeros(1,1,1025,15, device=device)
 
 #########################################################################################
 
+torch.save(fe.extract_stft_cuda(device,dp.preprocess()), "meta_blob/{DATASET_NAME}_{stage}_{type_input}-{type_label}_{audio_channel}_stft_tensor.pt")
 
 #########################################################################################
 if generate_data:
@@ -114,7 +115,7 @@ if generate_data:
         for type_input in filetype_inputs_list:
             paths_data_tensor[stage][type_input] = {}
             for type_label in filetype_labels_list:
-                if torch.cuda.is_available():
+                if not torch.cuda.is_available():
                     # SANITY-CHECK: whether the pre-calculated stft_features Tensors are there?
                     if os.path.exists(f'meta_blob/{DATASET_NAME}_{stage}_{type_input}-{type_label}_{audio_channel}_stft_tensor.pt'):
                         # appending the paths to be fed to data_generation module
