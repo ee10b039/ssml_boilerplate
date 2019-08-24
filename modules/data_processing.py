@@ -159,9 +159,9 @@ def slice_recording(path_recording, path_metadata_filepath_duration):
 #########--------------------------------------------------------------------
 
 def preprocess(dataset_name = f'MSD100',
-                path_master_data_repo = '../data/MSD100/',
-                path_inputs = '../data/MSD100/Mixtures/Dev/',
-                path_labels = '../data/MSD100/Sources/Dev/',
+                path_master_data_repo = '/media/sushmita/Seagate Backup Plus Drive/DataBase/musdb18hq/Mixtures/Dev/',
+                path_inputs = '/media/sushmita/Seagate Backup Plus Drive/DataBase/musdb18hq/Mixtures/Dev/',
+                path_labels = '/media/sushmita/Seagate Backup Plus Drive/DataBase/musdb18hq/Sources/Dev/',
                 filetype_inputs = 'mixture',
                 filetype_labels = 'vocals',
                 stage = '',
@@ -310,7 +310,7 @@ def data_generation(csv_file, root_dir, blueprint, paths_data_tensor, filetype_i
     num_files = 0
     for type_input in filetype_inputs_list:
         for type_label in filetype_labels_list:
-            if torch.cuda.is_available():
+            if not torch.cuda.is_available():
                 # SANITY-CHECK: whether the pre-calculated stft_features Tensors are there?
                 if os.path.exists(paths_data_tensor[type_input][type_label]):
                     # Don't calculate the stft features again. Just load the pytorch tensors to the original device
