@@ -41,23 +41,21 @@ tr_loss_history_cuda = None
 
 # Details of datset and network architecture
 ARCH_NAME = 'MEENET1'
-DATASET_NAME = 'MSD100'
+DATASET_NAME = 'MEENET1'
 print(f'Using DATASET == {DATASET_NAME}')
 
 audio_channel = 'mono'                      # used audio channel of wav files
-filetype_inputs_list = ['mixtures']
-filetype_labels_list = ['other', 'vocals', 'bass', 'drums']
+filetype_inputs_list = ['mixture']
+filetype_labels_list = ['vocals']
 
 # data-generation prerequisites
-csv_file = '../data/MSD100/DATA_MEENET1/test/meenet1_test_data.csv'
-root_dir = '../data/MSD100/DATA_MEENET1/test/'
-
-stages = {'dev', 'test'}
-csv_files = {'dev':"/media/sushmita/Seagate Backup Plus Drive/DataBase/musdb18hq/train/meenet1_dev_data.csv",
-             'test':"/media/sushmita/Seagate Backup Plus Drive/DataBase/musdb18hq/test/meenet1_test_data.csv",
+#csv_file = '/scratch/sushmita.t/data/meenet1_test_data.csv'
+#root_dir = '/scratch/sushmita.t/data'
+stage = {'dev'}
+stages = {'dev'}
+csv_files = {'dev':"/scratch/sushmita.t/data/meenet1_dev_data.csv",
             }
-root_dirs = {'dev':"/media/sushmita/Seagate Backup Plus Drive/DataBase/musdb18hq/train",
-             'test':"/media/sushmita/Seagate Backup Plus Drive/DataBase/musdb18hq/test",
+root_dirs = {'dev':"/scratch/sushmita.t/data",
             }
 
 paths_data_tensor = {}
@@ -104,9 +102,14 @@ blueprint_input = torch.zeros(1,1,1025,15, device=device)
 
 #########################################################################################
 
-torch.save(fe.extract_stft_cuda(device,dp.preprocess()), "meta_blob/{DATASET_NAME}_{stage}_{type_input}-{type_label}_{audio_channel}_stft_tensor.pt")
+#torch.save(fe.extract_stft_cuda(device,dp.preprocess()), "meta_blob/{DATASET_NAME}_{stage}_{type_input}-{type_label}_{audio_channel}_stft_tensor.pt")
+#type_input = ['mixtures']
+#type_label = [ 'vocals']
 
-#########################################################################################
+
+#paths_data_tensor[stage][type_input][type_label] = f'/scratch/data/{DATASET_NAME}_{stage}_{type_input}-{type_label}_{audio_channel}_stft_tensor.pt'
+
+########################################################################################
 if generate_data:
     print(f'generate_data={generate_data}')
     for stage in stages:
@@ -115,11 +118,13 @@ if generate_data:
         for type_input in filetype_inputs_list:
             paths_data_tensor[stage][type_input] = {}
             for type_label in filetype_labels_list:
-                if not torch.cuda.is_available():
-                    # SANITY-CHECK: whether the pre-calculated stft_features Tensors are there?
-                    if os.path.exists(f'meta_blob/{DATASET_NAME}_{stage}_{type_input}-{type_label}_{audio_channel}_stft_tensor.pt'):
+                if torch.cuda.is_available():
+                    print(f'/scratch/data/{DATASET_NAME}_{stage}_{type_input}_{type_label}_{audio_channel}_stft_tensor.pt')
+ 		    # SANITY-CHECK: whether the pre-calculated stft_features Tensors are there?
+                    if os.path.exists(f'/scratch/sushmita.t/data/{DATASET_NAME}_{stage}_{type_input}_{type_label}_{audio_channel}_stft_tensor.pt'):
+                        print('Enter')
                         # appending the paths to be fed to data_generation module
-                        paths_data_tensor[stage][type_input][type_label] = f'meta_blob/{DATASET_NAME}_{stage}_{type_input}-{type_label}_{audio_channel}_stft_tensor.pt'
+                        paths_data_tensor[stage][type_input][type_label] = f'/scratch/sushmita.t/data/{DATASET_NAME}_{stage}_{type_input}_{type_label}_{audio_channel}_stft_tensor.pt'
 
 
         dp.data_generation(csv_file=csv_files[stage],
@@ -249,8 +254,10 @@ if do_batchwise_processing and not do_cross_validation:
                     stage='dev'
                     print(f'stage = {stage} | {type_input}/{type_label}')
 
-                    print(f'creating the {stage} dataset')
-                    dataset = dl.Meenet1Dataset(csv_file=csv_file, root_dir=root_dir, label_type=type_label)
+                    print(f'creating the {stage} dataset....HERE I AM')
+                    dataset = dl.Meenet1Dataset(csv_file=csv_files[stage], root_dir=root_dirs[stage], label_type=type_label)
+                    
+
 
                     print(f'creating the {stage} dataloader')
                     dataloader = torch.utils.data.DataLoader(dataset=dataset, batch_size=batch_size,

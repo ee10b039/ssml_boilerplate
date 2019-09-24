@@ -310,7 +310,8 @@ def data_generation(csv_file, root_dir, blueprint, paths_data_tensor, filetype_i
     num_files = 0
     for type_input in filetype_inputs_list:
         for type_label in filetype_labels_list:
-            if not torch.cuda.is_available():
+            if torch.cuda.is_available():
+                print(paths_data_tensor)
                 # SANITY-CHECK: whether the pre-calculated stft_features Tensors are there?
                 if os.path.exists(paths_data_tensor[type_input][type_label]):
                     # Don't calculate the stft features again. Just load the pytorch tensors to the original device
@@ -318,8 +319,10 @@ def data_generation(csv_file, root_dir, blueprint, paths_data_tensor, filetype_i
                     print('features tensor file exists. Loading the extracted features tensor.')
                     # tr_data_feats_tensor = torch.load('tr_data_feats_tensor.pt', map_location='cuda:0')
                     # tr_data_feats_tensor.to(device)
-                    stft_tensor = torch.load(paths_data_tensor[type_input][type_label], map_location='cpu')
+                    print('before')
+                    stft_tensor = torch.load(paths_data_tensor[type_input][type_label])
                     num_files = stft_tensor.shape[1]
+                    print('after')
                     # tr_data_feats_tensor.to(device)
 
                     print(f'Features Tensor loaded successfully on {stft_tensor.device}.')
@@ -327,13 +330,13 @@ def data_generation(csv_file, root_dir, blueprint, paths_data_tensor, filetype_i
                     for i in range(stft_tensor.shape[0]):
                         for j in range(stft_tensor.shape[1]):
                             if i==0:
-                                path = f'{root_dir}mixtures/{j}.stfttensor'
+                                path = f'{root_dir}/mixture/{j}.stfttensor'
                                 data = stft_tensor[i,j].clone()
                                 data = data.view_as(blueprint)
                                 torch.save(data, path)
                                 # print(i, '-@@@@', data.shape)
                             elif i==1:
-                                path = f'{root_dir}{type_label}/{j}.stfttensor'
+                                path = f'{root_dir}/{type_label}/{j}.stfttensor'
                                 data = stft_tensor[i,j].clone()
                                 data = data.view_as(blueprint)
                                 torch.save(data, path)

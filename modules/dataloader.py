@@ -27,7 +27,9 @@ class Meenet1Dataset(torch.utils.data.Dataset):
         self.label_type = label_type
         self.transform = transform
 
-        self.label_type_dict = {'bass':1, 'drums':2, 'other':3, 'vocals':4}
+        #self.label_type_dict = {'bass':1, 'drums':2, 'other':3, 'vocals':4}
+        self.label_type_dict = {'vocals':0}
+
 
 
     def __len__(self):
@@ -37,6 +39,7 @@ class Meenet1Dataset(torch.utils.data.Dataset):
 
         # get the input tensor
         input_data_name = os.path.join(self.root_dir, self.data_info.iloc[idx,0])
+        print(input_data_name)
         input_data_tensor = torch.load(input_data_name)    # set map_location='cuda'
 
         # get the asked label tensor
